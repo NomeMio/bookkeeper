@@ -7,6 +7,6 @@ public class FarlocTest {
 
     @Test
     void thisTestAlwaysFails() {
-        //fail("This test is supposed to fail.");
+        //fail("This test is supposed to fail.");s
     }
 }
