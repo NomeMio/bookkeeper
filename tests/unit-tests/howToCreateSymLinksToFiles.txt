@@ -1,0 +1,1 @@
+ln -s ../../bookkeeper-server/src/test/java/org/apache/bookkeeper/bookie/BookieShellCostumTest.java BookieShellCostumTest.java
