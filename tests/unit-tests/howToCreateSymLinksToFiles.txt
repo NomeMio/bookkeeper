@@ -1,1 +1,11 @@
 ln -s ../../bookkeeper-server/src/test/java/org/apache/bookkeeper/bookie/BookieShellCostumTest.java BookieShellCostumTest.java
+
+
+per runnare i test di randoop :  mvn -f  pom.xml -e -X -Dtest=RegressionTest test dopo averli copiati nella cartella dei test con 
+cp tests-randoop/*.java src/test/java/org/apache/bookkeeper/randoop/
+per crearli 
+java -classpath ./../tools/randoop-all-4.3.2.jar:target/classes:$(cat cp.txt) \
+  randoop.main.Main gentests \
+  --testclass=org.apache.bookkeeper.bookie.LedgerEntryPage \
+  --time-limit=60 \
+  --junit-output-dir=tests-randoop
