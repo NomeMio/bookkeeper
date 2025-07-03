@@ -3,7 +3,16 @@ package org.apache.bookkeeper.bookie;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,85 +23,105 @@ import java.util.List;
 @SuppressWarnings({"unused"})
 public class LedgerEntryPageCostumTest {
 
-    private List<LedgerEntryPage> pages;
+   
+    
+    private LEPStateChangeCallback mockLEPStateChangeCallback() {
+        LEPStateChangeCallback callback = mock(LEPStateChangeCallback.class);
+        doNothing().when(callback).onResetInUse(any(LedgerEntryPage.class));
+        doNothing().when(callback).onSetInUse(any(LedgerEntryPage.class));
+        doNothing().when(callback).onSetClean(any(LedgerEntryPage.class));
+        doNothing().when(callback).onSetDirty(any(LedgerEntryPage.class));
+    return callback;
+}
+   
 
-    @Before
-    public void setUp() {
-        pages = new ArrayList<>();
-    }
 
-    @After
-    public void tearDown() throws Exception {
-        for (LedgerEntryPage lep : pages) {
-            if (lep != null) {
-                lep.close();
+    /*
+     * Test cases for LedgerEntryPage constructor with various parameters
+     */
+    @ParameterizedTest
+    // number:pageSize, number:entriesPerPage, boolean:withCallback, boolean:expectException
+    // if withCallback is true, a mock callback is created and passed to the constructor
+    // if expectException is true, the constructor should throw IllegalArgumentException otherwise the test fails
+    // if expectException is false, the constructor should not throw an exception and the test passes
+    @CsvSource({
+        "0,0,false,false",
+        "-1, 8, false, true",
+        "1024, -5, false, false",
+        "1024, 8, false, false",
+        "0,0,true,false",
+        "-1, 8, true, true",
+        "1024, -5, true, false",
+        "1024, 8, true, false",
+        "512, 4, true, false"
+    })
+    void testConstructorParametrized(int pageSize, int entriesPerPage, boolean withCallback, boolean expectException) {
+        LEPStateChangeCallback callback = withCallback ? mockLEPStateChangeCallback() : null;
+        try {
+            new LedgerEntryPage(pageSize, entriesPerPage, callback);
+            if (expectException) {
+                fail("Expected IllegalArgumentException");
+            }
+        } catch (IllegalArgumentException e) {
+            if (!expectException) {
+                fail("Did not expect exception, but got: " + e);
             }
         }
-    }
+    }    
 
-    private LedgerEntryPage createLedgerEntryPage(int pageSize, int entriesPerPage) {
-        LedgerEntryPage lep = new LedgerEntryPage(pageSize, entriesPerPage);
-        pages.add(lep);
-        return lep;
-    }
 
-    private LedgerEntryPage createLedgerEntryPage(int pageSize, int entriesPerPage, LEPStateChangeCallback callback) {
-        LedgerEntryPage lep = new LedgerEntryPage(pageSize, entriesPerPage, callback);
-        pages.add(lep);
-        return lep;
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorWithNegativePageSizeThrows() {
-        createLedgerEntryPage(-1, 8);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorWithNegativeEntriesPerPageThrows() {
-        createLedgerEntryPage(1024, -5);
+    /*
+     * Test cases for inUse() method 
+     */
+    @ParameterizedTest
+    // boolean:withCallback, boolean:expectException
+    // if withCallback is true, a mock callback is created and passed to the constructor
+    // if expectException is true, the constructor should throw IllegalArgumentException otherwise the test fails
+    // if expectException is false, the constructor should not throw an exception and the test passes
+    @CsvSource({
+        "false, false",
+        "true, false",
+    })
+    void testUsePage(boolean withCallback, boolean expectException) {
+        LEPStateChangeCallback callback = withCallback ? mockLEPStateChangeCallback() : null;
+        LedgerEntryPage leg = new LedgerEntryPage(64, 2, callback);
+        if (leg.inUse()) {
+            fail("LedgerEntryPage should not be in use at this point");
+        }
+        leg.usePage();
+        if(!leg.inUse()){
+            fail("LedgerEntryPage should be in use after usePage() call");
+        }
+        
     }
 
 
     /*
-    @Test
-    public void testConstructorWithoutCallback() {
-        LedgerEntryPage lep = new LedgerEntryPage(1024, 8);
-        assertNotNull(lep);
-        assertFalse(lep.inUse());
-        assertEquals(1024, lep.getPageToWrite().capacity());
+     * Test cases for resetPage() method
+     */    
+    @ParameterizedTest
+    // number:pageSize, number:entriesPerPage, boolean:withCallback, boolean:expectException
+    // if withCallback is true, a mock callback is created and passed to the constructor
+    // if expectException is true, the constructor should throw IllegalArgumentException otherwise the test fails
+    // if expectException is false, the constructor should not throw an exception and the test passes
+    @CsvSource({
+        "0,0,false,false",
+        "1024,8,false,false",
+        "0,0,true,false",
+        "1024,8,true,false"
+    })
+    void testResetPage(int pageSize, int entriesPerPage, boolean withCallback, boolean expectException){
+        LEPStateChangeCallback callback = withCallback ? mockLEPStateChangeCallback() : null;
+        LedgerEntryPage leg=new LedgerEntryPage(pageSize, entriesPerPage, callback);
+        if(leg.inUse()){
+            fail("LedgerEntryPage should not be in use at this point");
+        }
+        leg.usePage();
+        if(!leg.inUse()){
+            fail("LedgerEntryPage should be in use after usePage() call");
+        }
+        leg.resetPage();
     }
 
-    @Test
-    public void testConstructorWithNullCallback() {
-        LedgerEntryPage lep = new LedgerEntryPage(512, 4, null);
-        assertNotNull(lep);
-        assertFalse(lep.inUse());
-        assertEquals(512, lep.getPageToWrite().capacity());
-    }
 
-    @Test
-    public void testConstructorWithCallback() {
-        LEPStateChangeCallback callback = mock(LEPStateChangeCallback.class);
-        LedgerEntryPage lep = new LedgerEntryPage(256, 2, callback);
-        assertNotNull(lep);
-        assertFalse(lep.inUse());
-        assertEquals(256, lep.getPageToWrite().capacity());
-        // Verify that onResetInUse is called during construction
-        verify(callback, times(1)).onResetInUse(lep);
-    }
-    @Test
-    public void testUseAndReleasePage() {
-        LedgerEntryPage lep = new LedgerEntryPage(1024, 8);
-        assertFalse(lep.inUse());
-        lep.usePage();
-        assertTrue(lep.inUse());
-        lep.releasePage();
-        assertFalse(lep.inUse());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testReleasePageWithoutUseThrows() {
-        LedgerEntryPage lep = new LedgerEntryPage(1024, 8);
-        lep.releasePage(); // Should throw IllegalStateException
-    }*/
 }

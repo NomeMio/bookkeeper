@@ -220,6 +220,8 @@
       <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
+
+
     <dependency>
       <groupId>org.apache.bookkeeper.stats</groupId>
       <artifactId>otel-metrics-provider</artifactId>
@@ -237,6 +239,12 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+  <groupId>org.pitest</groupId>
+  <artifactId>pitest-junit5-plugin</artifactId>
+  <version>1.2.1</version> <!-- check for latest -->
+</dependency>
+
   </dependencies>
   <build>
     <plugins>
@@ -319,6 +327,51 @@
           </execution>
         </executions>
       </plugin>
+ 
+<plugin>
+    <groupId>org.openclover</groupId>
+    <artifactId>clover-maven-plugin</artifactId>
+    <version>4.5.2</version> <!-- check for latest version -->
+    <configuration>
+
+        <formats>
+            <format>html</format>
+            <format>xml</format>
+        </formats>
+        <!-- Optional: set cloverDatabase to default: target/clover/clover.db -->
+    </configuration>
+    <executions>
+        <execution>
+            <id>instrument</id>
+            <phase>process-test-classes</phase>
+            <goals>
+                <goal>instrument</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>aggregate</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>aggregate</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>clover-report</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>clover</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+ <plugin>
+  <groupId>org.pitest</groupId>
+  <artifactId>pitest-maven</artifactId>
+  <version>1.15.2</version>
+  <configuration>
+    <testPlugin>junit5</testPlugin>
+  </configuration>
+</plugin>
     </plugins>
   </build>
   <profiles>
@@ -336,6 +389,7 @@
       <id>tls-certs</id>
       <build>
         <plugins>
+        
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>

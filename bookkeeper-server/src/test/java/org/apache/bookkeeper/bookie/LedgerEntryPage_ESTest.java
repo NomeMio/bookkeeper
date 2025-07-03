@@ -5,7 +5,6 @@
 
 package org.apache.bookkeeper.bookie;
 
-import org.evosuite.runtime.TooManyResourcesException;
 import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -23,8 +22,8 @@ public class LedgerEntryPage_ESTest  {
     if (t instanceof AssumptionViolatedException) {
         throw (AssumptionViolatedException) t;
     }
-    if (t instanceof TooManyResourcesException) {
-        throw (TooManyResourcesException) t;
+    if (t instanceof AssertionError) {
+        throw (AssertionError) t;
     }
     assertThrownBy(sourceClass, t);
 }

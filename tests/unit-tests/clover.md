@@ -68,3 +68,30 @@ python3 <project root>/tests/my-stuff/extract-metrics.py \
 
 - Sostituisci `<ClasseDaValutare.java>`, `<AltraClasse.java>`, ecc. con i nomi delle classi Java che vuoi valutare.
 - I risultati verranno scritti nel file `output.txt`.
+
+
+
+
+## Esempi di comandi Maven Clover
+
+Ecco alcuni comandi che utilizzo frequentemente:
+
+- **Per eseguire più suite di test specifiche:**
+  ```sh
+  mvn clover:setup test -Dtest=LedgerEntryPageCostumTest,LedgerEntryPage_ESTest,C clover:aggregate clover:clover
+  ```
+
+- **Per eseguire la mia suite di test:**
+  ```sh
+  mvn clover:setup test -Dtest=LedgerEntryPageCostumTest clover:aggregate clover:clover
+  ```
+
+- **Per eseguire test suite auto-generate**
+  ```sh
+  mvn clover:setup test -Dtest=LedgerEntryPageCostumTest,RegressionTest clover:aggregate clover:clover
+  ```
+
+
+---
+
+Questi comandi
